@@ -1,10 +1,19 @@
 # src/cli.py
+from ast import alias
 from datetime import datetime, timedelta, timezone
+
+from streamlit import user
 from src.services.user_service import UserService
 from src.services.auction_service import AuctionService
 from src.services.bid_service import BidService
 from src.services.payment_service import PaymentService
 from src.services.reporting_service import ReportingService
+# --- Alias mapping dictionary ---
+id_map = {}
+def resolve_id(value: str) -> str:
+    """If user enters an alias like U1 or A1, resolve to UUID"""
+    return id_map.get(value, value)
+
 
 us = UserService()
 asvc = AuctionService()
@@ -34,6 +43,10 @@ def run_menu():
             email = input("Enter email: ").strip()
             user = us.register(name, email)
             print("Registered:", user)
+            alias = f"U{len([k for k in id_map if k.startswith('U')]) + 1}"
+            id_map[alias] = user["id"]
+            print(f"Alias saved: {alias} -> {user['id']}")
+
 
         elif choice == "2":
             title = input("Auction title: ").strip()
@@ -41,11 +54,15 @@ def run_menu():
             reserve = float(input("Reserve price: "))
             start_in = int(input("Start in minutes from now: "))
             duration = int(input("Duration in minutes: "))
-            creator_id = input("Creator user id: ").strip()
+            creator_id = resolve_id(input("Creator user UUID: ").strip())
             start = datetime.now(timezone.utc) + timedelta(minutes=start_in)
             end = start + timedelta(minutes=duration)
             auction = asvc.create(title, desc, reserve, start, end, creator_id)
             print("Auction created:", auction)
+            alias = f"A{len([k for k in id_map if k.startswith('A')]) + 1}"
+            id_map[alias] = auction["id"]
+            print(f"Alias saved: {alias} -> {auction['id']}")
+
 
         elif choice == "3":
             auctions = asvc.list_open()
@@ -56,20 +73,20 @@ def run_menu():
                     print(f"{a['id']} | {a['title']} | Reserve={a['reserve_price']} | Ends={a['end_time']}")
 
         elif choice == "4":
-            auction_id = input("Auction ID: ").strip()
-            bidder_id = input("Bidder ID: ").strip()
+            auction_id = resolve_id(input("Auction ID: ").strip())
+            bidder_id = resolve_id(input("Bidder user UUID: ").strip())
             commitment = input("Commitment (any string): ").strip()
             bid = bsvc.place_sealed(auction_id, bidder_id, commitment)
             print("Bid placed (sealed):", bid)
 
         elif choice == "5":
-            bid_id = input("Bid ID: ").strip()
+            bid_id = resolve_id(input("Bid ID: ").strip())
             amount = float(input("Reveal amount: "))
             r = bsvc.reveal(bid_id, amount)
             print("Bid revealed:", r)
 
         elif choice == "6":
-            auction_id = input("Auction ID: ").strip()
+            auction_id = resolve_id(input("Auction ID: ").strip())
             winner = bsvc.declare_winner(auction_id)
             if winner:
                 print("Winner:", winner)
@@ -77,15 +94,15 @@ def run_menu():
                 print("No winner (no revealed bids or reserve not met)")
 
         elif choice == "7":
-            auction_id = input("Auction ID: ").strip()
-            bid_id = input("Winning bid ID: ").strip()
-            payer_id = input("Payer user ID: ").strip()
+            auction_id = resolve_id(input("Auction ID: ").strip())
+            bid_id = resolve_id(input("Winning Bid ID: ").strip())
+            payer_id = resolve_id(input("Payer User UUID: ").strip())
             amount = float(input("Payment amount: "))
             pay = psvc.record(auction_id, bid_id, payer_id, amount)
             print("Payment recorded:", pay)
 
         elif choice == "8":
-            auction_id = input("Auction ID: ").strip()
+            auction_id = resolve_id(input("Auction ID: ").strip())
             report = rsvc.summary(auction_id)
             print("Report:", report)
 
