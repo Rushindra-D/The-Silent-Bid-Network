@@ -57,7 +57,7 @@ def run_menu():
             creator_id = resolve_id(input("Creator user UUID: ").strip())
             start = datetime.now(timezone.utc) + timedelta(minutes=start_in)
             end = start + timedelta(minutes=duration)
-            auction = asvc.create(title, desc, reserve, start, end, creator_id)
+            auction = asvc.create_auction(title, desc, reserve, start, end, creator_id)
             print("Auction created:", auction)
             alias = f"A{len([k for k in id_map if k.startswith('A')]) + 1}"
             id_map[alias] = auction["id"]
@@ -78,6 +78,9 @@ def run_menu():
             commitment = input("Commitment (any string): ").strip()
             bid = bsvc.place_sealed(auction_id, bidder_id, commitment)
             print("Bid placed (sealed):", bid)
+            alias = f"B{len([k for k in id_map if k.startswith('B')]) + 1}"
+            id_map[alias] = bid["id"]
+            print(f"Alias saved: {alias} -> {bid['id']}")
 
         elif choice == "5":
             bid_id = resolve_id(input("Bid ID: ").strip())
