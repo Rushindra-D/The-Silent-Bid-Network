@@ -3,11 +3,11 @@ from ast import alias
 from datetime import datetime, timedelta, timezone
 
 from streamlit import user
-from src.services.user_service import UserService
-from src.services.auction_service import AuctionService
-from src.services.bid_service import BidService
-from src.services.payment_service import PaymentService
-from src.services.reporting_service import ReportingService
+from services.user_service import UserService
+from services.auction_service import AuctionService
+from services.bid_service import BidService
+from services.payment_service import PaymentService
+from services.reporting_service import ReportingService
 # --- Alias mapping dictionary ---
 id_map = {}
 def resolve_id(value: str) -> str:
